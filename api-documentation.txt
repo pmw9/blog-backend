@@ -1,0 +1,189 @@
+Blog API Documentation
+===================
+
+Base URL: http://localhost:3000
+
+Authentication
+-------------
+The API uses JWT (JSON Web Token) for authentication. Protected routes require the token to be sent in the Authorization header:
+Authorization: Bearer <your_token>
+
+Authentication Routes
+-------------------
+1. Sign Up
+   - Endpoint: POST /auth/signup
+   - Description: Register a new user
+   - Body: { "username": string, "password": string }
+   - Response: { "message": string, "user": { "id": number, "username": string } }
+
+2. Login
+   - Endpoint: POST /auth/login
+   - Description: Authenticate user, get token and user data
+   - Body: { "username": string, "password": string }
+   - Response: {
+       "token": string,
+       "user": {
+         "id": number,
+         "username": string,
+         "role": "WRITER" | "ADMIN",
+         "createdAt": string,
+         "updatedAt": string
+       }
+     }
+
+Post Routes
+----------
+1. Get All Posts (Public)
+   - Endpoint: GET /api/posts
+   - Description: Retrieve all posts with their authors and comments
+   - Response: Array of posts with author and comments information
+
+2. Create Post (Protected)
+   - Endpoint: POST /api/posts
+   - Auth Required: Yes
+   - Body: { "title": string, "content": string }
+   - Response: Created post object with author information
+
+3. Update Post (Protected)
+   - Endpoint: PUT /api/posts/:id
+   - Auth Required: Yes
+   - Description: Update a post (only by the author)
+   - Body: { "title": string, "content": string }
+   - Response: Updated post object
+
+4. Delete Post (Protected)
+   - Endpoint: DELETE /api/posts/:id
+   - Auth Required: Yes
+   - Description: Delete a post (only by the author)
+   - Response: 204 No Content
+
+Comment Routes
+-------------
+1. Get All Comments (Public)
+   - Endpoint: GET /api/comments
+   - Description: Retrieve all comments with their post and author information
+   - Response: Array of comments with post and author details
+
+2. Create Comment (Public/Protected)
+   - Endpoint: POST /api/comments
+   - Auth Optional: Yes (supports both authenticated and anonymous comments)
+   - Body: 
+     - Authenticated: { "content": string, "postId": number }
+     - Anonymous: { "content": string, "postId": number, "userName": string }
+   - Response: Created comment object with post information
+
+3. Delete Comment (Protected)
+   - Endpoint: DELETE /api/comments/:id
+   - Auth Required: Yes
+   - Description: Delete a comment (by post owner or admin)
+   - Response: 204 No Content
+
+User Routes (Protected/Admin)
+---------------------------
+1. Get All Users
+   - Endpoint: GET /api/users
+   - Auth Required: Yes
+   - Description: List all users (admin sees all, writers see only writers)
+   - Query Parameters: 
+     - page: number (default: 1)
+     - limit: number (default: 10)
+   - Response: { users: User[], pagination: PaginationInfo }
+
+2. Get User by ID
+   - Endpoint: GET /api/users/:id
+   - Auth Required: Yes
+   - Description: Get specific user details and posts
+   - Response: User object with posts and stats
+
+Admin Routes (Protected/Admin Only)
+--------------------------------
+1. Create User
+   - Endpoint: POST /api/users
+   - Auth Required: Yes (Admin only)
+   - Body: { "username": string, "password": string, "role": "WRITER" | "ADMIN" }
+   - Response: Created user object
+
+2. Update User
+   - Endpoint: PUT /api/users/:id
+   - Auth Required: Yes (Admin only)
+   - Body: { "username": string, "password": string }
+   - Response: Updated user object
+
+3. Change User Role
+   - Endpoint: PATCH /api/users/:id/role
+   - Auth Required: Yes (Admin only)
+   - Body: { "role": "WRITER" | "ADMIN" }
+   - Response: Updated user object
+
+4. Delete User
+   - Endpoint: DELETE /api/users/:id
+   - Auth Required: Yes (Admin only)
+   - Description: Delete user and all associated data
+   - Response: Success message
+
+Data Models
+----------
+1. User
+   - id: number
+   - username: string
+   - role: "WRITER" | "ADMIN"
+   - createdAt: datetime
+   - updatedAt: datetime
+
+2. Post
+   - id: number
+   - title: string
+   - content: string
+   - authorId: number
+   - createdAt: datetime
+   - updatedAt: datetime
+
+3. Comment
+   - id: number
+   - content: string
+   - postId: number
+   - authorId: number (optional)
+   - userName: string (optional)
+   - createdAt: datetime
+   - updatedAt: datetime
+
+Error Responses
+-------------
+- 400: Bad Request - Invalid input
+- 401: Unauthorized - Missing or invalid token
+- 403: Forbidden - Insufficient permissions
+- 404: Not Found - Resource doesn't exist
+- 500: Internal Server Error - Server-side error
+
+Frontend Implementation Notes
+---------------------------
+1. Authentication:
+   - Implement login/signup forms
+   - Store JWT token securely (localStorage/cookies)
+   - Add token to all protected requests
+   - Handle token expiration
+
+2. Post Management:
+   - Create post list and detail views
+   - Implement post creation/edit forms
+   - Add delete confirmation dialogs
+   - Show author information
+   - Handle comments section
+
+3. Comment System:
+   - Support both authenticated and anonymous comments
+   - Show different UI for authenticated/anonymous users
+   - Implement comment deletion for post owners
+
+4. Admin Dashboard:
+   - Create admin-only routes
+   - Implement user management interface
+   - Add role management features
+   - Show user statistics
+
+5. User Experience:
+   - Add loading states
+   - Implement error handling
+   - Add pagination controls
+   - Implement search/filter functionality
+   - Show appropriate success/error messages
