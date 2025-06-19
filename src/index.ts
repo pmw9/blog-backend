@@ -7,13 +7,18 @@ import userRoutes from './routes/userRoutes';
 import postRoutes from './routes/postRoutes';
 import commentRoutes from './routes/commentRoutes';
 import authRoutes from './routes/authRoutes';
+import contactRoutes from './routes/contactRoutes';
+import reservationRoutes from './routes/reservationRoutes';
+import adminRoutes from './routes/adminRoutes';
+import reportRoutes from './routes/reportRoutes';
+import reviewRoutes from './routes/reviewRoutes';
 import { seedAdminUser } from './utils/seedAdmin';
 
 const app = express();
 const port = process.env.PORT ? Number(process.env.PORT) : 3001;
 
 // Middleware
-app.use(cors());
+app.use(cors({ origin: 'http://localhost:3000', credentials: true }));
 app.use(express.json());
 
 // Homepage route
@@ -26,6 +31,11 @@ app.use('/api/users', userRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/comments', commentRoutes);
 app.use('/auth', authRoutes);
+app.use('/api/contact', contactRoutes);
+app.use('/api/reservations', reservationRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/reports', reportRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 // 404 handler
 app.use((_req, res) => {

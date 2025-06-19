@@ -121,6 +121,20 @@ Admin Routes (Protected/Admin Only)
    - Description: Delete user and all associated data
    - Response: Success message
 
+Reservation Routes
+------------------
+1. Get Available Timeslots
+   - Endpoint: GET /api/reservations/slots?date=YYYY-MM-DD
+   - Description: Returns available timeslots for a given date ("09:00-11:00", "12:00-14:00", "15:00-17:00")
+   - Response: { available: string[] }
+
+2. Book Reservation
+   - Endpoint: POST /api/reservations
+   - Description: Book a reservation for a user, date, and timeslot
+   - Body: { userId: number, date: string (YYYY-MM-DD), timeslot: string }
+   - Response: { reservation: Reservation }
+   - Error: 409 if timeslot is already booked
+
 Data Models
 ----------
 1. User
@@ -147,12 +161,21 @@ Data Models
    - createdAt: datetime
    - updatedAt: datetime
 
+4. Reservation
+   - id: number
+   - userId: number
+   - date: string (YYYY-MM-DD)
+   - timeslot: string
+   - createdAt: datetime
+   - updatedAt: datetime
+
 Error Responses
 -------------
 - 400: Bad Request - Invalid input
 - 401: Unauthorized - Missing or invalid token
 - 403: Forbidden - Insufficient permissions
 - 404: Not Found - Resource doesn't exist
+- 409: Conflict - Timeslot already booked
 - 500: Internal Server Error - Server-side error
 
 Frontend Implementation Notes
@@ -181,7 +204,12 @@ Frontend Implementation Notes
    - Add role management features
    - Show user statistics
 
-5. User Experience:
+5. Reservation System:
+   - Implement timeslot selection UI
+   - Handle reservation booking and cancellation
+   - Show user's reservation history
+
+6. User Experience:
    - Add loading states
    - Implement error handling
    - Add pagination controls

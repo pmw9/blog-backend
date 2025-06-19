@@ -12,11 +12,11 @@ export const getAllUsers = async (req: Request, res: Response): Promise<void> =>
         
         // Get total count for pagination
         const totalCount = await prisma.user.count({
-            where: user.role === 'WRITER' ? { role: 'WRITER' } : undefined
+            where: user.role === 'USER' ? { role: 'USER' } : undefined
         });
 
         const users = await prisma.user.findMany({
-            where: user.role === 'WRITER' ? { role: 'WRITER' } : undefined,
+            where: user.role === 'USER' ? { role: 'USER' } : undefined,
             select: {
                 id: true,
                 username: true,
@@ -110,7 +110,7 @@ export const getUserById = async (req: Request, res: Response): Promise<void> =>
         }
 
         // Writers can only view other writers
-        if (requestingUser.role === 'WRITER' && targetUser.role !== 'WRITER') {
+        if (requestingUser.role === 'USER' && targetUser.role !== 'USER') {
             res.status(403).json({ message: 'Unauthorized to view this user' });
             return;
         }
@@ -134,7 +134,7 @@ export const adminCreateUser = async (req: Request, res: Response): Promise<void
             return;
         }
 
-        if (role && !['ADMIN', 'WRITER'].includes(role)) {
+        if (role && !['ADMIN', 'USER'].includes(role)) {
             res.status(400).json({ message: 'Invalid role specified' });
             return;
         }
@@ -154,7 +154,7 @@ export const adminCreateUser = async (req: Request, res: Response): Promise<void
             data: {
                 username: username.trim(),
                 password: hashedPassword,
-                role: role || 'WRITER',
+                role: role || 'USER',
                 createdById: adminUser.id // Track who created this user
             },
             select: {
@@ -266,7 +266,7 @@ export const adminChangeRole = async (req: Request, res: Response): Promise<void
         const { role } = req.body;
         const adminUser = req.user as { id: number; role: string };
 
-        if (!role || !['ADMIN', 'WRITER'].includes(role)) {
+        if (!role || !['ADMIN', 'USER'].includes(role)) {
             res.status(400).json({ message: 'Invalid role specified' });
             return;
         }
@@ -363,4 +363,95 @@ export const adminDeleteUser = async (req: Request, res: Response): Promise<void
         console.error('Error in adminDeleteUser:', error);
         res.status(500).json({ message: 'Error deleting user' });
     }
+};
+
+// Get a user's profile
+export const getUserProfile = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const user = await prisma.user.findUnique({
+      where: { id: Number(id) },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        dob: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    return res.json(user);
+  } catch (error: any) {
+    console.error('Get user profile error:', error);
+    return res.status(500).json({ message: 'Failed to fetch user profile', error: error.message || error });
+  }
+};
+
+// Update a user's profile
+export const updateUserProfile = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { email, dob } = req.body;
+    // Check if user exists
+    const user = await prisma.user.findUnique({ where: { id: Number(id) } });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    // Only update if at least one field is provided
+    if (email === undefined && dob === undefined) {
+      return res.status(400).json({ message: 'No update data provided' });
+    }
+    const updateData: any = {};
+    if (email !== undefined) updateData.email = email;
+    if (dob !== undefined) updateData.dob = dob ? new Date(dob) : null;
+    const updatedUser = await prisma.user.update({
+      where: { id: Number(id) },
+      data: updateData,
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        dob: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    });
+    return res.json({ message: 'User profile updated', user: updatedUser });
+  } catch (error: any) {
+    console.error('Update user profile error:', error);
+    return res.status(500).json({ message: 'Failed to update user profile', error: error.message || error });
+  }
+};
+
+// PATCH /api/users/:id/role - Admin changes a user's role
+export const updateUserRole = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { role } = req.body;
+    if (!role) {
+      return res.status(400).json({ message: 'Role is required' });
+    }
+    const validRoles = ['USER', 'ADMIN', 'MANAGER', 'CASHIER'];
+    if (!validRoles.includes(role)) {
+      return res.status(400).json({ message: 'Invalid role' });
+    }
+    const updatedUser = await prisma.user.update({
+      where: { id: Number(id) },
+      data: { role },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: true,
+        updatedAt: true
+      }
+    });
+    return res.json({ message: 'User role updated', user: updatedUser });
+  } catch (error: any) {
+    console.error('Update user role error:', error);
+    return res.status(500).json({ message: 'Failed to update user role', error: error.message || error });
+  }
 };

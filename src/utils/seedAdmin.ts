@@ -1,31 +1,28 @@
-import { PrismaClient } from '@prisma/client'
+import prisma from './prisma';
 import { hashPassword } from './hash';
 
-const prisma = new PrismaClient()
-
 export const seedAdminUser = async () => {
-  try{
-    const adminExists = await prisma.user.findUnique({
-      where: { username: 'admin' },
-    });
-    if (!adminExists) {
-      const adminPassword = await hashPassword('admin123');
+  const adminEmail = 'admin@steakz.com';
+  const existingAdmin = await prisma.user.findUnique({
+    where: { email: adminEmail },
+  });
 
-      await prisma.user.create({
-        data: {
-          username: 'admin',
-          password: adminPassword,
-          role: 'ADMIN',
-        },
-      });
-
-      console.log('✅ Admin user created');
-    } else {
-      console.log('ℹ️ Admin user already exists');
-    }
-  }
-  catch (error) {
-    console.error('Error checking for admin user:', error);
+  if (existingAdmin) {
+    console.log('ℹ Admin user already exists.');
     return;
   }
+
+  const adminPassword = await hashPassword('admin123');
+
+  await prisma.user.create({
+    data: {
+      username: 'admin',
+      email: adminEmail,
+      password: adminPassword,
+      dob: new Date('1980-01-01'),
+      role: 'ADMIN',
+    },
+  });
+
+  console.log('🌱 Admin user seeded.');
 };

@@ -16,7 +16,7 @@ export const getAllComments = async (_req: Request, res: Response): Promise<any>
         });
         
         // Transform the response to include the proper commenter name
-        const formattedComments = comments.map(comment => ({
+        const formattedComments = comments.map((comment: any) => ({
             ...comment,
             commenterName: comment.author ? comment.author.username : comment.userName
         }));
@@ -45,6 +45,7 @@ export const createComment = async (req: Request, res: Response): Promise<any> =
         const commentData: any = {
             content,
             postId: Number(postId),
+            approved: false, // All new comments are unapproved by default
         };
 
         // If user is authenticated, link the comment to their account

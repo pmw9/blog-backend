@@ -17,13 +17,16 @@ model User {
   id            Int       @id @default(autoincrement())
   username      String    @unique
   password      String
-  role          Role      @default(WRITER)
+  email          String?  @unique @db.VarChar(255)
+  dob            DateTime?
+  role          Role      @default(USER)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   
   // Relations
   posts         Post[]    @relation("UserPosts")
   comments      Comment[] @relation("AuthorComments")
+  reservations   Reservation[] @relation("UserReservations")
   
   // Self-referential relation for creator tracking
   createdById   Int?
@@ -56,11 +59,38 @@ model Comment {
   authorId  Int?
   author    User?    @relation("AuthorComments", fields: [authorId], references: [id])
 
+  approved  Boolean  @default(false)
+  stars     Int?     // Optional: 1-5 star rating for reviews
+
   @@index([postId])
   @@index([authorId])
 }
 
+model Reservation {
+  id          Int      @id @default(autoincrement())
+  user        User     @relation("UserReservations", fields: [userId], references: [id])
+  userId      Int
+  name        String
+  date        DateTime
+  time        String
+  isPaid      Boolean  @default(false)
+  status      String   @default("pending") // 'pending' | 'confirmed' | 'paid'
+  orders      Order[]
+  createdAt   DateTime @default(now())
+  served      Boolean  @default(false) // NEW FIELD
+}
+
+model Order {
+  id             Int          @id @default(autoincrement())
+  reservation    Reservation  @relation(fields: [reservationId], references: [id])
+  reservationId  Int
+  menuItem       String
+  price          Float
+}
+
 enum Role {
-  WRITER
+  USER
   ADMIN
+  MANAGER
+  CASHIER
 }
